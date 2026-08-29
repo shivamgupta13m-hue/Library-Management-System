@@ -6,23 +6,6 @@ This system implements **relational database normalization up to 3NF/BCNF**, aut
 
 ---
 
-## 🌟 Table of Contents
-1. [Project Overview & Key Features](#-key-features)
-2. [Complete File-by-File Guide](#-complete-file-by-file-guide)
-3. [How to Access & Run the Application](#-how-to-access--run-the-application)
-4. [Operations Guide (How to Use the App)](#-operations-guide)
-   - [Managing Books (Add, Edit, Delete)](#1-managing-books)
-   - [Managing Members (Add, History, Suspend/Delete)](#2-managing-members)
-   - [Circulation Desk (Issue & Return Books)](#3-circulation-desk)
-   - [Fines & Payments](#4-fines--overdue-payments)
-5. [Database Architecture & DBMS Specifications](#-database-architecture--dbms-specifications)
-   - [Relational Schema Mapping](#1-relational-schema-mapping)
-   - [Normalization Analysis (1NF to 3NF/BCNF)](#2-normalization-analysis)
-   - [SQL Triggers & Stored Procedures](#3-sql-triggers--stored-procedures)
-6. [REST API Reference](#-rest-api-reference)
-7. [GitHub & CI/CD Deployment Guide](#-github--cicd-deployment-guide)
-
----
 
 ## 🌟 Key Features
 
