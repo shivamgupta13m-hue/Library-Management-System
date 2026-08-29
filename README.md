@@ -1,0 +1,412 @@
+# 📚 Library Management System (DBMS Project)
+
+An enterprise-grade **Database Management System (DBMS)** web application built with **HTML5, CSS3, Modern JavaScript (ES6+), Python (Flask), MySQL / SQLite, and Relational ER Modeling**.
+
+This system implements **relational database normalization up to 3NF/BCNF**, automated business rules via **SQL Triggers**, real-time analytical projections via **SQL Views**, concurrency protection with **ACID Stored Procedures**, and a responsive single-page dashboard.
+
+---
+
+## 🌟 Table of Contents
+1. [Project Overview & Key Features](#-key-features)
+2. [Complete File-by-File Guide (What Every File Does & How to Use It)](#-complete-file-by-file-guide)
+3. [How to Run the Application](#-how-to-run-the-application)
+4. [Operations Guide (How to Use the App)](#-operations-guide)
+   - [Managing Books (Add, Edit, Delete)](#1-managing-books)
+   - [Managing Members (Add, History, Suspend/Delete)](#2-managing-members)
+   - [Circulation Desk (Issue & Return Books)](#3-circulation-desk)
+   - [Fines & Payments](#4-fines--overdue-payments)
+5. [Database Architecture & DBMS Specifications](#-database-architecture--dbms-specifications)
+   - [Relational Schema Mapping](#1-relational-schema-mapping)
+   - [Normalization Analysis (1NF to 3NF/BCNF)](#2-normalization-analysis)
+   - [SQL Triggers & Stored Procedures](#3-sql-triggers--stored-procedures)
+6. [REST API Reference](#-rest-api-reference)
+7. [GitHub & Deployment Guide](#-github--deployment-guide)
+
+---
+
+## 🌟 Key Features
+
+- **Relational Entity-Relationship (ER) Modeling**: 8 normalized entities handling 1:1, 1:N, and M:N relationships.
+- **ACID Transactions & Stored Procedures**: Safe checkouts ensuring books cannot be double-borrowed or issued to suspended members.
+- **Automated SQL Triggers**: Real-time stock decrement on issue, stock increment on return, and automated penalty calculation on overdue returns.
+- **Dual Database Adapter**: Seamlessly runs with **MySQL** for enterprise environments, or automatically falls back to an embedded zero-config **SQLite** database for instant local evaluation.
+- **Dual Operational Modes**: Works as a full dynamic Python Flask app (`http://127.0.0.1:5000`) and as a standalone offline / GitHub Pages demo with interactive mock data.
+
+---
+
+## 📁 Complete File-by-File Guide
+
+Here is an explanation of every file and folder in the project, what it does, and how it is used:
+
+```text
+library_management_system/
+├── app.py                      # Main backend server & REST API
+├── config.py                   # Server settings & database credentials
+├── requirements.txt            # Python dependencies
+├── test_dbms.py                # Automated testing script
+├── README.md                   # Complete documentation & project manual
+├── .gitignore                  # Git instructions on files to ignore
+├── index.html                  # Root HTML frontend (direct preview & GitHub Pages)
+│
+├── database/                   # Database schemas, seed data & access logic
+│   ├── schema.sql              # MySQL DDL (Tables, triggers, views, procedures)
+│   ├── seed_data.sql           # Realistic seed dataset for initial setup
+│   ├── er_diagram_doc.md       # Comprehensive ER modeling & normalization report
+│   ├── db.py                   # Database connector (MySQL + SQLite fallback)
+│   └── library_local.sqlite    # Auto-generated local database file (when run locally)
+│
+├── css/ & static/css/          # Styling
+│   └── style.css               # Modern responsive design, cards, colors & layout
+│
+├── js/ & static/js/            # Client-side Logic
+│   └── app.js                  # Asynchronous JavaScript controller & API caller
+│
+└── templates/                  # Flask HTML templates
+    └── index.html              # HTML template rendered by Flask
+```
+
+---
+
+### 1. Backend & Server Files
+
+#### 🐍 `app.py`
+- **What it does**: The central Python backend application powered by **Flask**.
+- **How it is used**:
+  - Run `python app.py` to start the web server on `http://127.0.0.1:5000`.
+  - Serves the frontend web page (`/`) as well as the static assets (`/css` and `/js`).
+  - Provides all REST API endpoints:
+    - `/api/dashboard/stats`: Aggregates KPI counters and category breakdowns.
+    - `/api/books`: Handles catalog search, book additions, updates, and deletions.
+    - `/api/members`: Manages member registration, directory listings, and borrowing histories.
+    - `/api/loans/issue`: Executes atomic checkout transactions.
+    - `/api/loans/return`: Processes book returns and calculates late fees.
+    - `/api/fines`: Manages the fine ledger and records payments.
+    - `/api/dbms/views/<name>`: Queries live SQL analytical views.
+
+#### ⚙️ `config.py`
+- **What it does**: Centralized configuration and environment settings.
+- **How it is used**:
+  - Stores database connection parameters (`MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`).
+  - Defines business rule constants such as `DAILY_FINE_RATE = 2.00` ($2.00/day for overdue items) and `DEFAULT_LOAN_DAYS = 14`.
+
+#### 📦 `requirements.txt`
+- **What it does**: Manifest of all external Python libraries required by the project.
+- **How it is used**:
+  - Run `pip install -r requirements.txt` to install `Flask`, `gunicorn`, `mysql-connector-python`, `python-dotenv`, and `Werkzeug`.
+
+#### 🧪 `test_dbms.py`
+- **What it does**: Automated end-to-end testing script for the database layer.
+- **How it is used**:
+  - Run `python test_dbms.py` in the terminal to verify table initialization, book checkout, overdue calculations, and fine settlements without needing a browser.
+
+---
+
+### 2. Database Layer (`database/`)
+
+#### 🗄️ `database/schema.sql`
+- **What it does**: The complete MySQL Data Definition Language (DDL) file.
+- **How it is used**:
+  - Defines all 8 relational tables (`categories`, `authors`, `books`, `book_authors`, `members`, `staff_users`, `loans`, `fines`).
+  - Enforces entity and referential integrity (Primary Keys, Foreign Keys with `ON DELETE RESTRICT` / `ON DELETE CASCADE`, Unique Keys, and Check constraints).
+  - Contains database Triggers (`trg_after_loan_insert`, `trg_after_loan_update`, `trg_auto_create_fine_on_return`).
+  - Contains stored procedures (`sp_issue_book`, `sp_return_book`) with transaction controls (`START TRANSACTION`, `COMMIT`, `ROLLBACK`).
+  - Defines analytical SQL views (`v_book_catalog`, `v_active_loans`, `v_overdue_loans`, `v_popular_books`).
+
+#### 🌱 `database/seed_data.sql`
+- **What it does**: Initial database seed data.
+- **How it is used**:
+  - Pre-populates the database with realistic sample records (categories, renowned computer science and literature books, authors, members, active borrowings, and overdue records) so the system is functional immediately upon first launch.
+
+#### 📊 `database/er_diagram_doc.md`
+- **What it does**: Academic DBMS documentation and project report.
+- **How it is used**:
+  - Documents the Entity-Relationship (ER) model using both Chen notation and Crow's Foot diagrams.
+  - Documents functional dependencies and provides mathematical normalization proofs up to **1NF, 2NF, 3NF, and BCNF**.
+  - Useful for project reviews, college viva examinations, and architectural reference.
+
+#### 🔌 `database/db.py`
+- **What it does**: The database abstraction and connection management layer.
+- **How it is used**:
+  - Implements a **Dual-Engine Architecture**: tries connecting to MySQL first; if MySQL is not detected or offline, it automatically initializes and queries an embedded SQLite database (`library_local.sqlite`) with identical schemas and business triggers.
+
+---
+
+### 3. Frontend & User Interface
+
+#### 🌐 `index.html` & `templates/index.html`
+- **What it does**: The Single-Page Application (SPA) user interface.
+- **How it is used**:
+  - `index.html` at the root allows opening the application directly in a web browser (double-click) or hosting on **GitHub Pages**.
+  - `templates/index.html` is the template rendered by Flask when running the Python backend.
+  - Divided into 6 interactive panels:
+    1. **Dashboard Overview**: KPI cards and category distribution charts.
+    2. **Book Catalog**: Searchable inventory table with "+ Add Book", Edit, and Delete actions.
+    3. **Members Directory**: Patron directory, contact details, and borrowing history modals.
+    4. **Circulation Desk**: Book checkout form and active loan monitoring with return processing.
+    5. **Fines & Overdues**: Late fee ledger and payment settlement dialog.
+    6. **DBMS & ER Docs**: Interactive Mermaid ER diagram viewer and live SQL view inspector.
+
+#### 🎨 `css/style.css` (and `static/css/style.css`)
+- **What it does**: The stylesheet controlling visual appearance, layout, and responsiveness.
+- **How it is used**:
+  - Defines CSS variables for consistent theming.
+  - Styles the sidebar, top navigation bar, glassmorphic metric cards, tables, badges, modals, and toast alerts.
+  - Implements mobile and tablet responsive layouts using media queries.
+
+#### ⚡ `js/app.js` (and `static/js/app.js`)
+- **What it does**: The client-side JavaScript engine.
+- **How it is used**:
+  - Manages view navigation without page reloads.
+  - Executes asynchronous `fetch()` API calls to Flask endpoints for CRUD operations.
+  - **Smart Offline Demo Fallback**: When opened statically without the Flask backend running, it automatically loads structured mock data so the UI remains interactive and never displays blank screens or broken layouts.
+
+---
+
+### 4. Git & Repository Files
+
+#### 📖 `README.md`
+- **What it does**: The project handbook and documentation displayed on the GitHub repository homepage.
+
+#### 🙈 `.gitignore`
+- **What it does**: Prevents temporary, private, or generated files (e.g. `__pycache__/`, `.env`, virtual environment folders) from being accidentally tracked in Git.
+
+---
+
+## 🚀 How to Run the Application
+
+You can run this project in either of two ways:
+
+### Mode 1: Full-Stack Live SQL Mode (Recommended)
+This mode connects the frontend to the live Python Flask backend and database (SQLite or MySQL).
+
+1. **Open your terminal** in the project folder:
+   ```bash
+   cd library_management_system
+   ```
+2. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Start the Flask server**:
+   ```bash
+   python app.py
+   ```
+4. Open your browser and go to:
+   👉 **`http://127.0.0.1:5000`**
+
+*Note: If MySQL is installed and running, it will connect to MySQL; otherwise, it will automatically create and use `database/library_local.sqlite`.*
+
+---
+
+### Mode 2: Standalone Static / GitHub Pages Preview
+This mode runs the interface directly in your browser without requiring Python:
+
+1. Locate `index.html` in the project root.
+2. Double-click `index.html` to open it in Chrome, Edge, or Firefox (or use VS Code Live Server).
+3. The app will launch in **Demo Mode**, displaying sample books, members, active loans, and fine records with full styling and interactivity.
+
+---
+
+## 📖 Operations Guide
+
+### 1. Managing Books
+
+#### How to Add a Book:
+1. Go to the **Book Catalog** tab in the sidebar.
+2. Click the blue **"+ New Book"** button in the top right.
+3. Fill in the ISBN, Title, Category, Author, Publisher, Year, and Total Copies.
+4. Click **"Save Book"**.
+
+#### How to Edit a Book:
+1. In the **Book Catalog** table, find the book you want to modify.
+2. Click the grey **"Edit"** button in the Actions column.
+3. Update the details and click **"Update Book"**.
+
+#### How to Delete a Book:
+1. In the **Book Catalog** table, click the red **Trash button (`🗑️`)** next to the book.
+2. A confirmation prompt will appear:
+   > *"Are you sure you want to delete this book? This will succeed only if there are no active loans."*
+3. Click **OK**.
+
+> [!IMPORTANT]
+> **Database Foreign Key Rule**: In a relational database, you cannot delete a book if a copy is currently borrowed by a member (`active loan`). If a book has active loans, go to the **Circulation Desk** and click **"Return Book"** first, and then you can delete it.
+
+---
+
+### 2. Managing Members
+
+#### How to Register a Member:
+1. Click on the **Members** tab in the sidebar.
+2. Click the **"+ Register Member"** button.
+3. Enter the patron's First Name, Last Name, unique Email, Phone Number, Address, and Borrow Limit.
+4. Click **"Register Member"**.
+
+#### How to View Member Borrowing History:
+1. Find the member in the directory.
+2. Click the **"Loan History"** button.
+3. A modal opens showing every book borrowed, checkout date, due date, return date, and associated fines.
+
+#### How to Suspend or Delete a Member:
+- **Best Practice (Suspension)**: In library management systems, member accounts are tied to historical transactions (`loans` and `fines`). To revoke borrowing privileges while preserving audit history, set the member's status to **`Suspended`**. The checkout procedure will automatically reject loan requests for suspended accounts.
+- **Deletion via SQL**: If you wish to permanently remove a member and their historical records:
+  ```sql
+  -- Remove related fines and loans first to satisfy Foreign Key constraints:
+  DELETE FROM fines WHERE loan_id IN (SELECT loan_id FROM loans WHERE member_id = 2);
+  DELETE FROM loans WHERE member_id = 2;
+  -- Delete the member record:
+  DELETE FROM members WHERE member_id = 2;
+  ```
+
+---
+
+### 3. Circulation Desk
+
+#### How to Issue a Book:
+1. Click on the **Circulation Desk** tab in the sidebar.
+2. Select a registered member from the dropdown.
+3. Select an available book from the dropdown (only books with copies in stock are shown).
+4. Enter the loan duration in days (default is 14 days).
+5. Click **"Execute Issue Transaction"**.
+   - The system validates that the book has available copies, the member is Active, and the member has not exceeded their borrow limit.
+   - The available copy count for the book is automatically decremented.
+
+#### How to Return a Book:
+1. In the **Circulation Desk** view, locate the active borrowing under **Active Borrowings**.
+2. Click the green **"Return Book"** button.
+3. Verify or adjust the return date.
+   - If returned on time: no fine is assessed.
+   - If returned after the due date: the system automatically calculates the late fine ($2.00 per day late).
+4. Click **"Confirm Return"**.
+   - The book is marked as returned, available copies are incremented, and any late fee is added to the fines ledger.
+
+---
+
+### 4. Fines & Overdue Payments
+
+#### How to Settle a Fine:
+1. Click on the **Fines & Overdues** tab in the sidebar.
+2. Find the unpaid penalty record.
+3. Click the blue **"Pay Fine"** button.
+4. Select the payment method (**Cash at Desk**, **UPI / QR Code**, **Debit / Credit Card**, or **Online Portal**).
+5. Click **"Confirm Payment"**.
+   - The fine status updates to `Paid` and the member's outstanding balance clears.
+
+---
+
+## 📐 Database Architecture & DBMS Specifications
+
+### 1. Relational Schema Mapping
+
+- **`categories`** (`category_id` [PK], `name` [UK], `description`, `created_at`)
+- **`authors`** (`author_id` [PK], `name`, `biography`, `country`, `created_at`)
+- **`books`** (`book_id` [PK], `isbn` [UK], `title`, `category_id` [FK], `publisher`, `publication_year`, `edition`, `total_copies`, `available_copies`, `shelf_location`, `created_at`, `updated_at`)
+- **`book_authors`** (`book_id` [PK, FK], `author_id` [PK, FK], `is_primary_author`)
+- **`members`** (`member_id` [PK], `first_name`, `last_name`, `email` [UK], `phone`, `address`, `membership_date`, `status`, `max_books_allowed`, `created_at`)
+- **`staff_users`** (`user_id` [PK], `username` [UK], `password_hash`, `full_name`, `email` [UK], `role`, `is_active`, `created_at`)
+- **`loans`** (`loan_id` [PK], `book_id` [FK], `member_id` [FK], `issued_by` [FK], `issue_date`, `due_date`, `return_date`, `status`, `notes`, `created_at`, `updated_at`)
+- **`fines`** (`fine_id` [PK], `loan_id` [FK, UK], `amount`, `fine_date`, `payment_date`, `payment_status`, `payment_method`, `remarks`, `created_at`, `updated_at`)
+
+---
+
+### 2. Normalization Analysis
+
+1. **1NF (First Normal Form)**:
+   - All attribute values are atomic (e.g., author names are separated into individual records; member first and last names are stored atomically).
+   - Repeating author groups are decomposed into the `book_authors` junction table.
+2. **2NF (Second Normal Form)**:
+   - Contains **no partial functional dependencies**.
+   - In `book_authors(book_id, author_id)`, the non-key attribute `is_primary_author` depends strictly on the entire composite candidate key `(book_id, author_id)`.
+3. **3NF (Third Normal Form)**:
+   - Contains **no transitive functional dependencies**.
+   - Category metadata (`name`, `description`) is stored in `categories`; only `category_id` is referenced in `books`.
+4. **BCNF (Boyce-Codd Normal Form)**:
+   - For every non-trivial functional dependency $X \rightarrow Y$, $X$ is a superkey (`isbn`, `email`, `username`, `(book_id, author_id)`).
+
+---
+
+### 3. SQL Triggers & Stored Procedures
+
+#### Trigger: Auto-Calculate Fines on Return
+```sql
+CREATE TRIGGER trg_auto_create_fine_on_return
+AFTER UPDATE ON loans
+FOR EACH ROW
+BEGIN
+    DECLARE days_overdue INT;
+    DECLARE daily_rate DECIMAL(10, 2) DEFAULT 2.00;
+    DECLARE total_fine DECIMAL(10, 2);
+
+    IF (OLD.return_date IS NULL AND NEW.return_date IS NOT NULL) THEN
+        IF NEW.return_date > NEW.due_date THEN
+            SET days_overdue = DATEDIFF(NEW.return_date, NEW.due_date);
+            SET total_fine = days_overdue * daily_rate;
+            
+            INSERT INTO fines (loan_id, amount, fine_date, payment_status, remarks)
+            VALUES (NEW.loan_id, total_fine, CURRENT_DATE, 'Unpaid', 
+                    CONCAT('Overdue by ', days_overdue, ' day(s) at $', daily_rate, '/day'))
+            ON DUPLICATE KEY UPDATE amount = total_fine;
+        END IF;
+    END IF;
+END;
+```
+
+#### Stored Procedure: Safe Book Checkout (`sp_issue_book`)
+```sql
+CALL sp_issue_book(
+    p_book_id, 
+    p_member_id, 
+    p_staff_id, 
+    p_loan_days, 
+    @p_loan_id, 
+    @p_status_code, 
+    @p_message
+);
+```
+Validates inventory availability, member status, borrow limits, and checks for unpaid overdue balances before committing the transaction.
+
+---
+
+## 📡 REST API Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/status` | System health check & active database engine info |
+| `GET` | `/api/dashboard/stats` | KPI metrics and category distribution |
+| `GET` | `/api/books` | List books with search, category, and availability filters |
+| `POST` | `/api/books` | Register a new book title |
+| `GET` | `/api/books/<id>` | Fetch specific book details |
+| `PUT` | `/api/books/<id>` | Update book details and inventory copies |
+| `DELETE` | `/api/books/<id>` | Remove book from catalog (if no active loans) |
+| `GET` | `/api/members` | List members with active borrow counts |
+| `POST` | `/api/members` | Register new library member |
+| `GET` | `/api/members/<id>/history` | Fetch member borrowing and return history |
+| `GET` | `/api/loans` | List loans (`?status=active`, `?status=overdue`) |
+| `POST` | `/api/loans/issue` | Execute book checkout transaction |
+| `POST` | `/api/loans/return` | Process return and auto-calculate late fines |
+| `GET` | `/api/fines` | Fetch overdue fine ledger |
+| `POST` | `/api/fines/pay` | Settle fine payment |
+| `GET` | `/api/dbms/views/<view_name>` | Query SQL analytical views dynamically |
+
+---
+
+## 🐙 GitHub & Deployment Guide
+
+### Pushing Updates to GitHub
+```bash
+git status
+git add .
+git commit -m "docs: comprehensive README with file-by-file guide and operations manual"
+git push origin main
+```
+
+### Hosting on GitHub Pages (Static Preview)
+1. Go to your repository settings on GitHub.
+2. In the left sidebar, click **Pages**.
+3. Under **Branch**, select `main` and root `/`.
+4. Click **Save**. Your static preview with Demo Mode will be live on GitHub Pages!
+
+### Hosting with Live Backend (Render.com)
+1. Create a **Web Service** on Render connected to your repository.
+2. Set **Build Command**: `pip install -r requirements.txt`
+3. Set **Start Command**: `gunicorn app:app`
+4. Deploy to get your live Python Flask web app on the internet!
