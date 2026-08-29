@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System | Enterprise DBMS Project</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="static/css/style.css" id="mainCssLink" onerror="this.onerror=null; this.href='css/style.css';">
+    <!-- Mermaid.js for interactive ER Diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+</head>
+<body>
+
+    <!-- ====================================================================
+         1. SIDEBAR NAVIGATION
+         ==================================================================== -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <div class="brand-info">
+                <h2>LibraDB Engine</h2>
+                <span>Enterprise DBMS</span>
+            </div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a class="nav-link active" data-view="dashboard-view">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-view="books-view">
+                    <i class="fas fa-books"></i>
+                    <span>Book Catalog</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-view="members-view">
+                    <i class="fas fa-users"></i>
+                    <span>Members</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-view="circulation-view">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Circulation Desk</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-view="fines-view">
+                    <i class="fas fa-receipt"></i>
+                    <span>Fines & Overdues</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-view="dbms-docs-view">
+                    <i class="fas fa-database"></i>
+                    <span>DBMS & ER Docs</span>
+                    <span class="dbms-badge-pill">SQL Views</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="db-status-badge">
+                <div class="status-dot"></div>
+                <span id="dbEngineBadge">Connecting...</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ====================================================================
+         2. MAIN WRAPPER & TOPBAR
+         ==================================================================== -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="page-title">
+                <h1 id="pageTitleText">Dashboard Overview</h1>
+                <p id="pageSubtitleText">Real-time library analytics, KPIs, and recent activity</p>
+            </div>
+            <div class="topbar-actions">
+                <button class="btn btn-primary btn-sm" onclick="openModal('addBookModal')">
+                    <i class="fas fa-plus"></i> Add Book
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="openModal('addMemberModal')">
+                    <i class="fas fa-user-plus"></i> Add Member
+                </button>
+            </div>
+        </header>
+
+        <main class="content-container">
+
+            <!-- ================================================================
+                 TAB 1: DASHBOARD VIEW
+                 ================================================================ -->
+            <section id="dashboard-view" class="view-panel active">
+                <div class="stats-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap kpi-blue"><i class="fas fa-book"></i></div>
+                        <div class="kpi-details">
+                            <h3 id="statTotalTitles">0</h3>
+                            <p>Unique Book Titles</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap kpi-green"><i class="fas fa-layer-group"></i></div>
+                        <div class="kpi-details">
+                            <h3 id="statAvailableCopies">0</h3>
+                            <p>Available on Shelf</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap kpi-purple"><i class="fas fa-hand-holding"></i></div>
+                        <div class="kpi-details">
+                            <h3 id="statActiveLoans">0</h3>
+                            <p>Active Borrowings</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap kpi-red"><i class="fas fa-clock"></i></div>
+                        <div class="kpi-details">
+                            <h3 id="statOverdueLoans">0</h3>
+                            <p>Overdue Items</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap kpi-amber"><i class="fas fa-money-bill-wave"></i></div>
+                        <div class="kpi-details">
+                            <h3 id="statFinesCollected">$0.00</h3>
+                            <p>Fines Collected</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                    <!-- Recent Activity Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-history" style="color:var(--primary)"></i> Recent Transactions</h2>
+                        </div>
+                        <div class="card-body" style="padding:0;">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Loan ID</th>
+                                            <th>Book Title</th>
+                                            <th>Member</th>
+                                            <th>Issued</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentActivityTableBody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Distribution Breakdown -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-bar" style="color:var(--secondary)"></i> Genre Distribution</h2>
+                        </div>
+                        <div class="card-body" id="categoryProgressContainer">
+                            <!-- Rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================
+                 TAB 2: BOOKS CATALOG
+                 ================================================================ -->
+            <section id="books-view" class="view-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-books" style="color:var(--primary)"></i> Catalog & Stock Management</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('addBookModal')">
+                            <i class="fas fa-plus"></i> New Book
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="search-input-wrap">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="bookSearchInput" placeholder="Search by title, ISBN, or author...">
+                            </div>
+                            <select id="bookCategoryFilter" class="filter-select">
+                                <option value="">All Categories</option>
+                            </select>
+                            <select id="bookAvailabilityFilter" class="filter-select">
+                                <option value="">All Stock Status</option>
+                                <option value="available">Available in Stock</option>
+                                <option value="out_of_stock">Out of Stock</option>
+                            </select>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ISBN</th>
+                                        <th>Title & Details</th>
+                                        <th>Category</th>
+                                        <th>Author(s)</th>
+                                        <th>Inventory</th>
+                                        <th>Shelf</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="booksTableBody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================
+                 TAB 3: MEMBERS DIRECTORY
+                 ================================================================ -->
+            <section id="members-view" class="view-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-users" style="color:var(--primary)"></i> Library Members Directory</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('addMemberModal')">
+                            <i class="fas fa-user-plus"></i> Register Member
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-bar">
+                            <div class="search-input-wrap">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="memberSearchInput" placeholder="Search member by name, email, or phone...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Member ID</th>
+                                        <th>Full Name</th>
+                                        <th>Contact Information</th>
+                                        <th>Status</th>
+                                        <th>Current Loans</th>
+                                        <th>Fines Balance</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="membersTableBody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================
+                 TAB 4: CIRCULATION DESK (ISSUE & RETURN)
+                 ================================================================ -->
+            <section id="circulation-view" class="view-panel">
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+                    <!-- Issue Book Fast Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-arrow-circle-right" style="color:var(--success)"></i> Issue Book (ACID)</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="issueBookForm">
+                                <div class="form-group">
+                                    <label class="form-label">Select Registered Member *</label>
+                                    <select name="member_id" id="issueMemberSelect" class="form-control" required>
+                                        <option value="">Loading members...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Select Available Book *</label>
+                                    <select name="book_id" id="issueBookSelect" class="form-control" required>
+                                        <option value="">Loading available books...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Loan Duration (Days)</label>
+                                    <input type="number" name="loan_days" class="form-control" value="14" min="1" max="90" required>
+                                </div>
+                                <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 0.5rem;">
+                                    <i class="fas fa-check"></i> Execute Issue Transaction
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Active Loans Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-list-check" style="color:var(--primary)"></i> Active Borrowings (v_active_loans)</h2>
+                        </div>
+                        <div class="card-body" style="padding:0;">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Loan ID</th>
+                                            <th>Book Title</th>
+                                            <th>Member</th>
+                                            <th>Issue Date</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="activeLoansTableBody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================
+                 TAB 5: FINES & OVERDUES
+                 ================================================================ -->
+            <section id="fines-view" class="view-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-receipt" style="color:var(--warning)"></i> Overdue Fines & Penalty Ledger</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fine ID</th>
+                                        <th>Member Name</th>
+                                        <th>Book Title</th>
+                                        <th>Penalty Amount</th>
+                                        <th>Fine Date</th>
+                                        <th>Payment Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finesTableBody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================
+                 TAB 6: DBMS ARCHITECTURE & ER MODELING DOCS
+                 ================================================================ -->
+            <section id="dbms-docs-view" class="view-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-sitemap" style="color:var(--primary)"></i> Entity-Relationship (ER) Model</h2>
+                    </div>
+                    <div class="card-body">
+                        <p style="margin-bottom:1rem; color:var(--gray-700)">
+                            The database schema is fully normalized up to <strong>3NF / BCNF</strong>. Below is the live rendered Crow's Foot ER Diagram:
+                        </p>
+                        <div class="mermaid" style="background:#f8fafc; padding:1.5rem; border-radius:var(--radius-md); text-align:center;">
+erDiagram
+    CATEGORIES ||--o{ BOOKS : "classifies (1:N)"
+    AUTHORS ||--o{ BOOK_AUTHORS : "writes (1:N)"
+    BOOKS ||--o{ BOOK_AUTHORS : "written_by (1:N)"
+    BOOKS ||--o{ LOANS : "borrowed_in (1:N)"
+    MEMBERS ||--o{ LOANS : "initiates (1:N)"
+    STAFF_USERS ||--o{ LOANS : "issues (1:N)"
+    LOANS ||--o| FINES : "incurs (1:1)"
+
+    CATEGORIES {
+        int category_id PK
+        varchar name UK
+        text description
+    }
+    AUTHORS {
+        int author_id PK
+        varchar name
+        varchar country
+    }
+    BOOKS {
+        int book_id PK
+        varchar isbn UK
+        varchar title
+        int category_id FK
+        int total_copies
+        int available_copies
+    }
+    BOOK_AUTHORS {
+        int book_id PK_FK
+        int author_id PK_FK
+        boolean is_primary_author
+    }
+    MEMBERS {
+        int member_id PK
+        varchar first_name
+        varchar last_name
+        varchar email UK
+        varchar phone
+        enum status
+    }
+    LOANS {
+        int loan_id PK
+        int book_id FK
+        int member_id FK
+        date issue_date
+        date due_date
+        date return_date
+        enum status
+    }
+    FINES {
+        int fine_id PK
+        int loan_id FK_UK
+        decimal amount
+        enum payment_status
+    }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live SQL Views Inspector -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-table" style="color:var(--secondary)"></i> Live Database View Inspector</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="view-selector-tabs">
+                            <button class="tab-btn active" data-view-name="v_book_catalog" onclick="inspectDbmsView('v_book_catalog')">v_book_catalog</button>
+                            <button class="tab-btn" data-view-name="v_active_loans" onclick="inspectDbmsView('v_active_loans')">v_active_loans</button>
+                            <button class="tab-btn" data-view-name="v_overdue_loans" onclick="inspectDbmsView('v_overdue_loans')">v_overdue_loans</button>
+                            <button class="tab-btn" data-view-name="v_popular_books" onclick="inspectDbmsView('v_popular_books')">v_popular_books</button>
+                        </div>
+                        <div id="dbmsViewResultContainer">
+                            <!-- Populated dynamically with live SQL results -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ====================================================================
+         MODALS
+         ==================================================================== -->
+
+    <!-- Modal 1: Add Book -->
+    <div id="addBookModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Register New Book</h3>
+                <button class="modal-close" onclick="closeModal('addBookModal')">&times;</button>
+            </div>
+            <form id="addBookForm">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">ISBN Number *</label>
+                            <input type="text" name="isbn" class="form-control" placeholder="e.g. 978-0132350884" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category / Genre *</label>
+                            <select name="category_id" id="addBookCategorySelect" class="form-control" required>
+                                <option value="">-- Select Category --</option>
+                            </select>
+                        </div>
+                        <div class="form-group form-grid-full">
+                            <label class="form-label">Book Title *</label>
+                            <input type="text" name="title" class="form-control" placeholder="e.g. Designing Data-Intensive Applications" required>
+                        </div>
+                        <div class="form-group form-grid-full">
+                            <label class="form-label">Primary Author *</label>
+                            <input type="text" name="author_name" class="form-control" placeholder="e.g. Martin Kleppmann" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Publisher</label>
+                            <input type="text" name="publisher" class="form-control" placeholder="e.g. O'Reilly Media">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Publication Year</label>
+                            <input type="number" name="publication_year" class="form-control" placeholder="2024" min="1000" max="2100">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Inventory Copies *</label>
+                            <input type="number" name="total_copies" class="form-control" value="5" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Shelf Location</label>
+                            <input type="text" name="shelf_location" class="form-control" placeholder="e.g. CS-B2-04">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addBookModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Edit Book -->
+    <div id="editBookModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Edit Book Details</h3>
+                <button class="modal-close" onclick="closeModal('editBookModal')">&times;</button>
+            </div>
+            <form id="editBookForm">
+                <input type="hidden" name="book_id">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group form-grid-full">
+                            <label class="form-label">Book Title *</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category *</label>
+                            <select name="category_id" id="editBookCategorySelect" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Publisher</label>
+                            <input type="text" name="publisher" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Publication Year</label>
+                            <input type="number" name="publication_year" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Edition</label>
+                            <input type="text" name="edition" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Total Copies</label>
+                            <input type="number" name="total_copies" class="form-control" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Shelf Location</label>
+                            <input type="text" name="shelf_location" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editBookModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Add Member -->
+    <div id="addMemberModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Register Library Member</h3>
+                <button class="modal-close" onclick="closeModal('addMemberModal')">&times;</button>
+            </div>
+            <form id="addMemberForm">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">First Name *</label>
+                            <input type="text" name="first_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" name="last_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Address *</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number *</label>
+                            <input type="tel" name="phone" class="form-control" required>
+                        </div>
+                        <div class="form-group form-grid-full">
+                            <label class="form-label">Residential Address</label>
+                            <input type="text" name="address" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Books Allowed</label>
+                            <input type="number" name="max_books_allowed" class="form-control" value="5" min="1" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-control">
+                                <option value="Active">Active</option>
+                                <option value="Suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-user-check"></i> Register Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Member History -->
+    <div id="memberHistoryModal" class="modal-overlay">
+        <div class="modal-dialog" style="max-width:750px;">
+            <div class="modal-header">
+                <h3>Member Borrowing History</h3>
+                <button class="modal-close" onclick="closeModal('memberHistoryModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Loan ID</th>
+                                <th>Book Title</th>
+                                <th>Issued</th>
+                                <th>Due Date</th>
+                                <th>Returned</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberHistoryTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('memberHistoryModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: Return Book -->
+    <div id="returnBookModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Process Book Return (ACID)</h3>
+                <button class="modal-close" onclick="closeModal('returnBookModal')">&times;</button>
+            </div>
+            <form id="returnBookForm">
+                <input type="hidden" name="loan_id">
+                <div class="modal-body">
+                    <div style="background:var(--gray-100); padding:1rem; border-radius:var(--radius-md); margin-bottom:1rem;">
+                        <div><strong>Book:</strong> <span id="returnModalBookTitle"></span></div>
+                        <div style="margin-top:0.25rem;"><strong>Due Date:</strong> <span id="returnModalDueDate"></span></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Return Date *</label>
+                        <input type="date" name="return_date" id="returnDateInput" class="form-control" required>
+                    </div>
+                    <div id="returnFinePreview" style="margin-top:1rem; padding:0.75rem; border-radius:var(--radius-md); background:var(--gray-50); border:1px solid var(--gray-200);"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('returnBookModal')">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirm Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 6: Pay Fine -->
+    <div id="payFineModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Settle Fine Payment</h3>
+                <button class="modal-close" onclick="closeModal('payFineModal')">&times;</button>
+            </div>
+            <form id="payFineForm">
+                <input type="hidden" name="fine_id">
+                <div class="modal-body">
+                    <div style="text-align:center; padding:1.5rem 0;">
+                        <p style="font-size:0.9rem; color:var(--gray-700)">Outstanding Penalty Balance</p>
+                        <h2 id="payFineAmountText" style="font-size:2.5rem; color:var(--danger); font-weight:800;">$0.00</h2>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Payment Method *</label>
+                        <select name="payment_method" class="form-control" required>
+                            <option value="Cash">Cash at Desk</option>
+                            <option value="UPI">UPI / QR Code</option>
+                            <option value="Card">Debit / Credit Card</option>
+                            <option value="Online">Online Portal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('payFineModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-dollar-sign"></i> Confirm Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Application Script -->
+    <script src="static/js/app.js" id="mainJsScript" onerror="this.onerror=null; this.src='js/app.js';"></script>
+</body>
+</html>
